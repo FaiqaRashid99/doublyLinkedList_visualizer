@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doubly Linked List Visualizer</title>
+<style>
+:root{--bg:#f4f6fa;--sf:#fff;--tx:#1a2033;--mu:#5b647a;--bd:#d9deea;--ac:#4f46e5;--nx:#2563eb;--pv:#ea580c;--gd:#16a34a;--bad:#dc2626;--wn:#ca8a04;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1219;--sf:#181c27;--tx:#e8ebf5;--mu:#9aa3bd;--bd:#2b3248;--ac:#8b93ff;--nx:#60a5fa;--pv:#fb923c;--gd:#4ade80;--bad:#f87171;--wn:#facc15}}
+:root[data-theme="dark"]{--bg:#0f1219;--sf:#181c27;--tx:#e8ebf5;--mu:#9aa3bd;--bd:#2b3248;--ac:#8b93ff;--nx:#60a5fa;--pv:#fb923c;--gd:#4ade80;--bad:#f87171;--wn:#facc15}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:22px;margin:0 0 2px}.sub{color:var(--mu);margin:0 0 14px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px;min-width:0}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.ctl label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+select,input[type=text],input[type=number]{font:inherit;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);min-width:0}
+input[type=text],input[type=number]{width:110px}
+button{font:inherit;padding:7px 13px;border:1px solid var(--bd);border-radius:8px;background:var(--sf);color:var(--tx);cursor:pointer}
+button:hover:not(:disabled){border-color:var(--ac)}button:disabled{opacity:.4;cursor:default}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#msg{color:var(--bad);min-height:20px;margin:8px 0 0;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:960px){.grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}}
+#stage{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+svg text{font-family:"Segoe UI",system-ui,sans-serif}
+.nd{fill:var(--sf);stroke:var(--bd);stroke-width:2}
+.nd.new{stroke:var(--gd);stroke-width:3}.nd.del{stroke:var(--bad);stroke-width:3}.nd.found{stroke:var(--wn);stroke-width:3}
+.ar{fill:none;stroke-width:2}
+#expl{margin:12px 0;padding:10px 12px;border-left:4px solid var(--ac);background:var(--bg);border-radius:6px;min-height:64px}
+code{font-family:Consolas,"Courier New",monospace;background:var(--bd);padding:1px 5px;border-radius:4px;font-size:.92em}
+.pl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pl input[type=range]{flex:1;min-width:120px}
+#cnt{color:var(--mu);font-size:13px;min-width:90px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.chip{font:13px Consolas,"Courier New",monospace;border:1px solid var(--bd);border-radius:999px;padding:2px 10px}
+#out{margin:0;background:#0f1220;color:#a7f3d0;border-radius:8px;padding:10px;font:13px/1.45 Consolas,"Courier New",monospace;min-height:56px;max-height:130px;overflow:auto;white-space:pre-wrap}
+.tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#stack{font-size:13px;color:var(--mu);margin-bottom:8px}
+#code{position:relative;background:#0f1220;color:#e6e9f5;border-radius:8px;padding:8px 0;max-height:520px;overflow:auto;font:13px/1.55 Consolas,"Courier New",monospace}
+.ln{display:flex;white-space:pre;padding-right:12px}.ln .no{width:34px;text-align:right;color:#6b7394;padding-right:12px;flex:none}
+.ln.cur{background:#2d3475;box-shadow:inset 3px 0 0 #facc15}
+@media(prefers-reduced-motion:no-preference){.ln{transition:background .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Doubly linked list visualizer</h1>
+<p class="sub">Pick an operation, press Run, then step through the C++ code line by line.</p>
+<section class="card">
+<div class="ctl">
+<label>Data type<select id="type"><option>int</option><option>double</option><option>string</option><option>Student</option></select></label>
+<label>Operation<select id="op"></select></label>
+<label id="gV">Value<input type="text" id="vIn"></label>
+<label id="gN">Name<input type="text" id="nameIn"></label>
+<label id="gR">Roll no.<input type="number" id="rollIn"></label>
+<label id="gP">Position<input type="number" id="posIn" value="2" min="1"></label>
+<button class="pri" id="run">Run</button>
+<button id="reset">Reset list</button>
+</div>
+<p id="msg" role="status"></p>
+</section>
+<div class="grid">
+<section class="card">
+<div id="stage"><svg id="svg" role="img" aria-label="Linked list diagram"></svg></div>
+<div id="expl" aria-live="polite"></div>
+<div class="pl">
+<button id="first" title="First step">⏮</button><button id="prev">◀ Prev</button><button id="play">▶ Play</button><button id="next">Next ▶</button><button id="last" title="Last step">⏭</button>
+<input type="range" id="scrub" min="0" max="0" value="0" aria-label="Step">
+<span id="cnt"></span>
+<label style="font-size:12px;color:var(--mu)">Speed <input type="range" id="spd" min="1" max="5" value="3"></label>
+</div>
+<div class="chips" id="state"></div>
+<pre id="out"></pre>
+</section>
+<section class="card">
+<div class="tabs"><button id="tFn" class="on">Running function</button><button id="tCl">Node and class</button></div>
+<div id="stack"></div>
+<div id="code"></div>
+</section>
+</div>
+</div>
+<script>
+/* ===================== ENGINE (pure logic, no DOM) ===================== */
+var UID = 0;
+var MAX_NODES = 8;
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+var CODE_SRC = {
+insertAtFront:
+`void insertAtFront(T value) {                     //#sig
+    Node<T>* newNode = new Node<T>(value);        //#new
+
+    if (head == nullptr) {                        //#if
+        head = newNode;                           //#h1
+        tail = newNode;                           //#t1
+    } else {
+        newNode->next = head;                     //#nn
+        head->prev = newNode;                     //#hp
+        head = newNode;                           //#h2
+    }
+    count++;                                      //#cnt
+}                                                 //#end`,
+
+insertAtEnd:
+`void insertAtEnd(T value) {                       //#sig
+    Node<T>* newNode = new Node<T>(value);        //#new
+
+    if (head == nullptr) {                        //#if
+        head = newNode;                           //#h1
+        tail = newNode;                           //#t1
+    } else {
+        tail->next = newNode;                     //#tn
+        newNode->prev = tail;                     //#np
+        tail = newNode;                           //#t2
+    }
+    count++;                                      //#cnt
+}                                                 //#end`,
+
+insertAtPosition:
+`void insertAtPosition(T value, int position) {    //#sig
+    if (position < 1 || position > count + 1) {   //#chk
+        cout << "Invalid position" << endl;       //#bad
+        return;                                   //#ret0
+    }
+    if (position == 1) {                          //#p1
+        insertAtFront(value);                     //#callF
+        return;                                   //#retF
+    }
+    if (position == count + 1) {                  //#pe
+        insertAtEnd(value);                       //#callE
+        return;                                   //#retE
+    }
+
+    Node<T>* current = head;                      //#cur
+    for (int i = 1; i < position - 1; i++) {      //#for
+        current = current->next;                  //#adv
+    }
+
+    Node<T>* newNode = new Node<T>(value);        //#new
+    newNode->next = current->next;                //#nn
+    newNode->prev = current;                      //#np
+    current->next->prev = newNode;                //#nx
+    current->next = newNode;                      //#cn
+    count++;                                      //#cnt
+}                                                 //#end`,
+
+deleteFront:
+`void deleteFront() {                              //#sig
+    if (head == nullptr) {                        //#if
+        cout << "List is empty" << endl;          //#msg
+        return;                                   //#ret0
+    }
+
+    Node<T>* temp = head;                         //#tmp
+    head = head->next;                            //#hd
+
+    if (head == nullptr) {                        //#if2
+        tail = nullptr;                           //#t0
+    } else {
+        head->prev = nullptr;                     //#hp
+    }
+
+    delete temp;                                  //#del
+    count--;                                      //#cnt
+}                                                 //#end`,
+
+deleteEnd:
+`void deleteEnd() {                                //#sig
+    if (head == nullptr) {                        //#if
+        cout << "List is empty" << endl;          //#msg
+        return;                                   //#ret0
+    }
+
+    Node<T>* temp = tail;                         //#tmp
+    tail = tail->prev;                            //#tl
+
+    if (tail == nullptr) {                        //#if2
+        head = nullptr;                           //#h0
+    } else {
+        tail->next = nullptr;                     //#tn
+    }
+
+    delete temp;                                  //#del
+    count--;                                      //#cnt
+}                                                 //#end`,
+
+deleteByValue:
+`void deleteByValue(T value) {                     //#sig
+    Node<T>* current = head;                      //#cur
+    while (current != nullptr &&
+           current->data != value) {              //#while
+        current = current->next;                  //#adv
+    }
+
+    if (current == nullptr) {                     //#if
+        cout << "Value not found" << endl;        //#nf
+        return;                                   //#ret0
+    }
+
+    if (current == head) {                        //#ifH
+        deleteFront();                            //#callF
+        return;                                   //#retF
+    }
+    if (current == tail) {                        //#ifT
+        deleteEnd();                              //#callE
+        return;                                   //#retE
+    }
+
+    current->prev->next = current->next;          //#l1
+    current->next->prev = current->prev;          //#l2
+    delete current;                               //#del
+    count--;                                      //#cnt
+}                                                 //#end`,
+
+search:
+`int search(T value) {                             //#sig
+    Node<T>* current = head;                      //#cur
+    int position = 1;                             //#pos
+
+    while (current != nullptr) {                  //#while
+        if (current->data == value) {             //#if
+            return position;                      //#ret
+        }
+        current = current->next;                  //#adv
+        position++;                               //#inc
+    }
+    return -1;                                    //#ret2
+}                                                 //#end`,
+
+displayForward:
+`void displayForward() {                           //#sig
+    Node<T>* current = head;                      //#cur
+    cout << "NULL <-> ";                          //#c1
+    while (current != nullptr) {                  //#while
+        cout << current->data << " <-> ";         //#print
+        current = current->next;                  //#adv
+    }
+    cout << "NULL" << endl;                       //#c2
+}                                                 //#end`,
+
+displayBackward:
+`void displayBackward() {                          //#sig
+    Node<T>* current = tail;                      //#cur
+    cout << "NULL <-> ";                          //#c1
+    while (current != nullptr) {                  //#while
+        cout << current->data << " <-> ";         //#print
+        current = current->prev;                  //#adv
+    }
+    cout << "NULL" << endl;                       //#c2
+}                                                 //#end`,
+
+reverse:
+`void reverse() {                                  //#sig
+    Node<T>* current = head;                      //#cur
+    while (current != nullptr) {                  //#while
+        Node<T>* temp = current->prev;            //#tmp
+        current->prev = current->next;            //#sw1
+        current->next = temp;                     //#sw2
+        current = current->prev;                  //#adv
+    }
+
+    Node<T>* temp = head;                         //#t3
+    head = tail;                                  //#h3
+    tail = temp;                                  //#t4
+}                                                 //#end`
+};
+
+var STATIC_SRC = {
+nodeStruct:
+`template <typename T>
+struct Node {
+    T        data;       // the value, any type
+    Node<T>* prev;       // address of the previous node
+    Node<T>* next;       // address of the next node
+
+    Node(T value) {
+        data = value;
+        prev = nullptr;
+        next = nullptr;
+    }
+};`,
+listClass:
+`template <typename T>
+class DoublyLinkedList {
+private:
+    Node<T>* head;       // first node
+    Node<T>* tail;       // last node
+    int      count;      // number of nodes
+
+public:
+    DoublyLinkedList() {
+        head  = nullptr;
+        tail  = nullptr;
+        count = 0;
+    }
+
+    // insertAtFront, insertAtEnd, insertAtPosition,
+    // deleteFront, deleteEnd, deleteByValue,
+    // search, displayForward, displayBackward, reverse
+};`
+};
+
+var CODE = {};
+Object.keys(CODE_SRC).forEach(function (name) {
+  var ids = {};
+  var lines = CODE_SRC[name].split("\n").map(function (ln, i) {
+    var m = ln.match(/\s*\/\/#(\w+)\s*$/);
+    if (m) { ids[m[1]] = i; return ln.slice(0, m.index); }
+    return ln;
+  });
+  CODE[name] = { name: name, lines: lines, ids: ids, isStatic: false };
+});
+Object.keys(STATIC_SRC).forEach(function (name) {
+  CODE[name] = { name: name, lines: STATIC_SRC[name].split("\n"), ids: {}, isStatic: true };
+});
+
+/* ---------- values ---------- */
+var SAMPLES = {
+  int: [10, 20, 30],
+  double: [1.5, 2.5, 3.5],
+  string: ["Ali", "Sara", "Hina"],
+  Student: [{ name: "Ayesha", roll: 101 }, { name: "Bilal", roll: 102 }]
+};
+function mkVal(type, inp) {
+  if (type === "int") { var n = parseInt(inp, 10); return { label: String(n), sub: "", key: n }; }
+  if (type === "double") { var d = parseFloat(inp); return { label: Number.isInteger(d) ? d.toFixed(1) : String(d), sub: "", key: d }; }
+  if (type === "string") { return { label: String(inp), sub: "", key: String(inp) }; }
+  return { label: String(inp.name), sub: "#" + inp.roll, key: parseInt(inp.roll, 10) };
+}
+function emptyState() {
+  return { nodes: {}, row: [], head: null, tail: null, count: 0, vars: {}, nums: {}, hl: {},
+           floating: null, slot: 0, out: [], line: "" };
+}
+function makeBase(type, vals) {
+  var s = emptyState();
+  (vals || SAMPLES[type]).forEach(function (v) {
+    var id = ++UID;
+    s.nodes[id] = { id: id, val: mkVal(type, v), prev: null, next: null };
+    if (s.tail !== null) { s.nodes[s.tail].next = id; s.nodes[id].prev = s.tail; }
+    else s.head = id;
+    s.tail = id; s.row.push(id); s.count++;
+  });
+  return s;
+}
+function cleanSnap(snap) {
+  var s = clone(snap);
+  s.vars = {}; s.nums = {}; s.hl = {}; s.floating = null; s.slot = 0; s.line = "";
+  return s;
+}
+function lab(s, id) { return id === null || id === undefined ? "nullptr" : s.nodes[id].val.label; }
+
+/* ---------- recorder ---------- */
+function Rec(base) { this.s = clone(base); this.frames = []; this.stack = []; }
+Rec.prototype.enter = function (fn, owned) { this.stack.push({ fn: fn, owned: owned || [] }); };
+Rec.prototype.step = function (id, text, mut) {
+  if (mut) mut(this.s);
+  var fn = this.stack[this.stack.length - 1].fn;
+  var line = CODE[fn].ids[id];
+  if (line === undefined) throw new Error("bad line id " + fn + ":" + id);
+  this.frames.push({ fn: fn, line: line, text: text,
+    stack: this.stack.map(function (x) { return x.fn; }), snap: clone(this.s) });
+};
+Rec.prototype._cleanup = function (s) {
+  var top = this.stack[this.stack.length - 1];
+  top.owned.forEach(function (n) { delete s.vars[n]; delete s.nums[n]; });
+  if (this.stack.length === 1) s.hl = {};
+};
+Rec.prototype.exit = function (text) {   // normal end: closing brace
+  var self = this;
+  this.step("end", text || "The function ends. Its local variables disappear.", function (s) { self._cleanup(s); });
+  this.stack.pop();
+};
+Rec.prototype.leave = function (id, text, mut) {   // early return
+  var self = this;
+  this.step(id, text, function (s) { if (mut) mut(s); self._cleanup(s); });
+  this.stack.pop();
+};
+
+function pushOut(s, str) { s.out.push(str); }
+function newNodeStep(R, id, val, slot, extra) {
+  R.step("new", "Create a new node on the heap that stores `" + val.label + "`. Both its prev and next start as nullptr.", function (s) {
+    s.nodes[id] = { id: id, val: val, prev: null, next: null };
+    s.floating = id; s.slot = slot; s.vars.newNode = id; s.hl[id] = "new";
+  });
+}
+
+var OPS = {};
+
+OPS.insertAtFront = function (R, a) {
+  var val = a.val, id = ++UID;
+  R.enter("insertAtFront", ["newNode"]);
+  newNodeStep(R, id, val, 0);
+  var empty = R.s.head === null;
+  R.step("if", empty ? "`head == nullptr` is true, so the list is empty." : "`head == nullptr` is false, so the list already has nodes.");
+  if (empty) {
+    R.step("h1", "The new node is the only node, so head points to it.", function (s) { s.head = id; });
+    R.step("t1", "tail points to it as well. The node joins the list.", function (s) { s.tail = id; s.row.unshift(id); s.floating = null; });
+  } else {
+    var old = R.s.head;
+    R.step("nn", "`newNode->next = head`: the new node's next pointer aims at the old first node (`" + lab(R.s, old) + "`).", function (s) { s.nodes[id].next = old; });
+    R.step("hp", "`head->prev = newNode`: the old first node's prev pointer aims back at the new node. The two nodes are now linked both ways.", function (s) { s.nodes[old].prev = id; });
+    R.step("h2", "`head = newNode`: head moves to the new node, so it becomes the first node.", function (s) { s.head = id; s.row.unshift(id); s.floating = null; });
+  }
+  R.step("cnt", "`count++`: the list now holds " + (R.s.count + 1) + " node" + (R.s.count + 1 === 1 ? "" : "s") + ".", function (s) { s.count++; });
+  R.exit();
+};
+
+OPS.insertAtEnd = function (R, a) {
+  var val = a.val, id = ++UID;
+  R.enter("insertAtEnd", ["newNode"]);
+  newNodeStep(R, id, val, R.s.row.length);
+  var empty = R.s.head === null;
+  R.step("if", empty ? "`head == nullptr` is true, so the list is empty." : "`head == nullptr` is false, so the list already has nodes.");
+  if (empty) {
+    R.step("h1", "The new node is the only node, so head points to it.", function (s) { s.head = id; });
+    R.step("t1", "tail points to it as well. The node joins the list.", function (s) { s.tail = id; s.row.push(id); s.floating = null; });
+  } else {
+    var old = R.s.tail;
+    R.step("tn", "`tail->next = newNode`: the old last node's next pointer aims at the new node.", function (s) { s.nodes[old].next = id; });
+    R.step("np", "`newNode->prev = tail`: the new node's prev pointer aims back at the old last node. Both links exist now.", function (s) { s.nodes[id].prev = old; });
+    R.step("t2", "`tail = newNode`: tail moves to the new node, so it becomes the last node.", function (s) { s.tail = id; s.row.push(id); s.floating = null; });
+  }
+  R.step("cnt", "`count++`: the list now holds " + (R.s.count + 1) + " node" + (R.s.count + 1 === 1 ? "" : "s") + ".", function (s) { s.count++; });
+  R.exit();
+};
+
+OPS.insertAtPosition = function (R, a) {
+  var val = a.val, pos = a.pos;
+  R.enter("insertAtPosition", ["current", "newNode"]);
+  var valid = pos >= 1 && pos <= R.s.count + 1;
+  R.step("chk", valid ? "Is `" + pos + "` a valid position? It must be between 1 and `count + 1` = " + (R.s.count + 1) + ". Yes, it is." :
+                        "Is `" + pos + "` a valid position? It must be between 1 and `count + 1` = " + (R.s.count + 1) + ". No, it is not.");
+  if (!valid) {
+    R.step("bad", "Print an error message, because the position does not exist.", function (s) { pushOut(s, "Invalid position"); });
+    R.leave("ret0", "`return`: nothing is inserted and the list stays the same.");
+    return;
+  }
+  R.step("p1", pos === 1 ? "`position == 1` is true: inserting at position 1 is the same as inserting at the front." : "`position == 1` is false.");
+  if (pos === 1) {
+    R.step("callF", "Call `insertAtFront(value)` and let it do the work.");
+    OPS.insertAtFront(R, a);
+    R.leave("retF", "Back in `insertAtPosition`. `return` finishes the job.");
+    return;
+  }
+  R.step("pe", pos === R.s.count + 1 ? "`position == count + 1` is true: inserting just after the last node is the same as inserting at the end." : "`position == count + 1` is false, so the new node goes somewhere in the middle.");
+  if (pos === R.s.count + 1) {
+    R.step("callE", "Call `insertAtEnd(value)` and let it do the work.");
+    OPS.insertAtEnd(R, a);
+    R.leave("retE", "Back in `insertAtPosition`. `return` finishes the job.");
+    return;
+  }
+  R.step("cur", "`current = head`: start walking from the first node.", function (s) { s.vars.current = s.head; });
+  var i = 1;
+  while (true) {
+    var cond = i < pos - 1;
+    var ii = i;
+    R.step("for", (ii === 1 ? "The loop starts with `i = 1`. " : "`i++` makes `i = " + ii + "`. ") + "Is `" + ii + " < " + (pos - 1) + "`? " + (cond ? "Yes, so keep walking." : "No, so stop. `current` is the node just before position " + pos + "."),
+           function (s) { s.nums.i = ii; });
+    if (!cond) break;
+    R.step("adv", "`current = current->next`: move one node to the right.", function (s) { s.vars.current = s.nodes[s.vars.current].next; });
+    i++;
+  }
+  var cur = R.s.vars.current, id = ++UID;
+  newNodeStep(R, id, val, pos - 1);
+  R.step("nn", "`newNode->next = current->next`: the new node aims forward at the node after current (`" + lab(R.s, R.s.nodes[cur].next) + "`).", function (s) { s.nodes[id].next = s.nodes[cur].next; });
+  R.step("np", "`newNode->prev = current`: the new node aims back at current (`" + lab(R.s, cur) + "`).", function (s) { s.nodes[id].prev = cur; });
+  R.step("nx", "`current->next->prev = newNode`: the node after current now aims back at the new node.", function (s) { s.nodes[s.nodes[cur].next].prev = id; });
+  R.step("cn", "`current->next = newNode`: current aims forward at the new node. All four links are done, so the node is inserted.", function (s) { s.nodes[cur].next = id; s.row.splice(pos - 1, 0, id); s.floating = null; });
+  R.step("cnt", "`count++`: the list now holds " + (R.s.count + 1) + " nodes.", function (s) { s.count++; });
+  R.exit();
+};
+
+function removeNode(s, id) {
+  delete s.nodes[id];
+  s.row = s.row.filter(function (x) { return x !== id; });
+  delete s.hl[id];
+  Object.keys(s.vars).forEach(function (k) { if (s.vars[k] === id) delete s.vars[k]; });
+}
+
+OPS.deleteFront = function (R) {
+  R.enter("deleteFront", ["temp"]);
+  var empty = R.s.head === null;
+  R.step("if", empty ? "`head == nullptr` is true, so there is nothing to delete." : "`head == nullptr` is false, so there is a first node to delete.");
+  if (empty) {
+    R.step("msg", "Print a message instead of deleting.", function (s) { pushOut(s, "List is empty"); });
+    R.leave("ret0", "`return`: the list is unchanged.");
+    return;
+  }
+  R.step("tmp", "`temp = head`: remember the first node so we can free it later.", function (s) { s.vars.temp = s.head; s.hl[s.head] = "del"; });
+  R.step("hd", "`head = head->next`: head moves to the second node.", function (s) { s.head = s.nodes[s.head].next; });
+  var none = R.s.head === null;
+  R.step("if2", none ? "`head == nullptr` is true: that was the only node, so the list is now empty." : "`head == nullptr` is false: there is still a new first node.");
+  if (none) R.step("t0", "`tail = nullptr`: an empty list has no tail either.", function (s) { s.tail = null; });
+  else R.step("hp", "`head->prev = nullptr`: the new first node must not point back at the node being deleted.", function (s) { s.nodes[s.head].prev = null; });
+  R.step("del", "`delete temp`: free the memory of the old first node. It disappears from the list.", function (s) { removeNode(s, s.vars.temp); });
+  R.step("cnt", "`count--`: the list now holds " + (R.s.count - 1) + " node" + (R.s.count - 1 === 1 ? "" : "s") + ".", function (s) { s.count--; });
+  R.exit();
+};
+
+OPS.deleteEnd = function (R) {
+  R.enter("deleteEnd", ["temp"]);
+  var empty = R.s.head === null;
+  R.step("if", empty ? "`head == nullptr` is true, so there is nothing to delete." : "`head == nullptr` is false, so there is a last node to delete.");
+  if (empty) {
+    R.step("msg", "Print a message instead of deleting.", function (s) { pushOut(s, "List is empty"); });
+    R.leave("ret0", "`return`: the list is unchanged.");
+    return;
+  }
+  R.step("tmp", "`temp = tail`: remember the last node so we can free it later.", function (s) { s.vars.temp = s.tail; s.hl[s.tail] = "del"; });
+  R.step("tl", "`tail = tail->prev`: tail moves back to the second-last node.", function (s) { s.tail = s.nodes[s.tail].prev; });
+  var none = R.s.tail === null;
+  R.step("if2", none ? "`tail == nullptr` is true: that was the only node, so the list is now empty." : "`tail == nullptr` is false: there is still a new last node.");
+  if (none) R.step("h0", "`head = nullptr`: an empty list has no head either.", function (s) { s.head = null; });
+  else R.step("tn", "`tail->next = nullptr`: the new last node must not point forward at the node being deleted.", function (s) { s.nodes[s.tail].next = null; });
+  R.step("del", "`delete temp`: free the memory of the old last node. It disappears from the list.", function (s) { removeNode(s, s.vars.temp); });
+  R.step("cnt", "`count--`: the list now holds " + (R.s.count - 1) + " node" + (R.s.count - 1 === 1 ? "" : "s") + ".", function (s) { s.count--; });
+  R.exit();
+};
+
+OPS.deleteByValue = function (R, a) {
+  var key = a.val.key, vl = a.val.label;
+  R.enter("deleteByValue", ["current"]);
+  R.step("cur", "`current = head`: start searching from the first node.", function (s) { s.vars.current = s.head; });
+  while (true) {
+    var cur = R.s.vars.current;
+    var notNull = cur !== null;
+    var differs = notNull && R.s.nodes[cur].val.key !== key;
+    var txt = !notNull ? "`current != nullptr` is false: we ran past the last node."
+            : differs ? "`current` is at `" + lab(R.s, cur) + "`. It is not null and `" + lab(R.s, cur) + " != " + vl + "`, so keep looking."
+            : "`current` is at `" + lab(R.s, cur) + "`, which equals `" + vl + "`. The loop stops here.";
+    R.step("while", txt, function (s) { if (notNull && !differs) s.hl[cur] = "del"; });
+    if (!differs) break;
+    R.step("adv", "`current = current->next`: move one node to the right.", function (s) { s.vars.current = s.nodes[s.vars.current].next; });
+  }
+  var cur2 = R.s.vars.current;
+  R.step("if", cur2 === null ? "`current == nullptr` is true: the value is not in the list." : "`current == nullptr` is false: we found the value.");
+  if (cur2 === null) {
+    R.step("nf", "Print a message, because there is nothing to delete.", function (s) { pushOut(s, "Value not found"); });
+    R.leave("ret0", "`return`: the list is unchanged.");
+    return;
+  }
+  R.step("ifH", cur2 === R.s.head ? "`current == head` is true: the node to delete is the first node." : "`current == head` is false.");
+  if (cur2 === R.s.head) {
+    R.step("callF", "Call `deleteFront()`. Deleting the first node is a special case.");
+    OPS.deleteFront(R);
+    R.leave("retF", "Back in `deleteByValue`. `return` finishes the job.");
+    return;
+  }
+  R.step("ifT", cur2 === R.s.tail ? "`current == tail` is true: the node to delete is the last node." : "`current == tail` is false, so the node is in the middle.");
+  if (cur2 === R.s.tail) {
+    R.step("callE", "Call `deleteEnd()`. Deleting the last node is a special case.");
+    OPS.deleteEnd(R);
+    R.leave("retE", "Back in `deleteByValue`. `return` finishes the job.");
+    return;
+  }
+  R.step("l1", "`current->prev->next = current->next`: the node before current now skips over it and aims at the node after it.", function (s) { var c = s.nodes[cur2]; s.nodes[c.prev].next = c.next; });
+  R.step("l2", "`current->next->prev = current->prev`: the node after current now aims back at the node before it. Current is cut out of the chain.", function (s) { var c = s.nodes[cur2]; s.nodes[c.next].prev = c.prev; });
+  R.step("del", "`delete current`: free the memory of the removed node.", function (s) { removeNode(s, cur2); });
+  R.step("cnt", "`count--`: the list now holds " + (R.s.count - 1) + " nodes.", function (s) { s.count--; });
+  R.exit();
+};
+
+OPS.search = function (R, a) {
+  var key = a.val.key, vl = a.val.label, p = 1;
+  R.enter("search", ["current", "position"]);
+  R.step("cur", "`current = head`: start at the first node.", function (s) { s.vars.current = s.head; });
+  R.step("pos", "`position = 1`: we count positions starting from 1.", function (s) { s.nums.position = 1; });
+  while (true) {
+    var cur = R.s.vars.current;
+    R.step("while", cur === null ? "`current != nullptr` is false: we reached the end without finding `" + vl + "`." : "`current != nullptr` is true: look at the node `" + lab(R.s, cur) + "`.");
+    if (cur === null) break;
+    var match = R.s.nodes[cur].val.key === key, pp = p;
+    R.step("if", match ? "`" + lab(R.s, cur) + " == " + vl + "` is true. Found it!" : "`" + lab(R.s, cur) + " == " + vl + "` is false.", function (s) { if (match) s.hl[cur] = "found"; });
+    if (match) {
+      R.leave("ret", "`return position`: the value `" + vl + "` is at position " + pp + ".", function (s) { pushOut(s, "search(" + vl + ") returned " + pp); });
+      return;
+    }
+    R.step("adv", "`current = current->next`: move to the next node.", function (s) { s.vars.current = s.nodes[s.vars.current].next; });
+    p++;
+    var np = p;
+    R.step("inc", "`position++`: now `position` is " + np + ".", function (s) { s.nums.position = np; });
+  }
+  R.leave("ret2", "`return -1`: -1 means the value is not in the list.", function (s) { pushOut(s, "search(" + vl + ") returned -1"); });
+};
+
+function displayOp(name, startKey, stepKey, dir) {
+  return function (R) {
+    R.enter(name, ["current"]);
+    R.step("cur", "`current = " + startKey + "`: start at the " + (dir === "next" ? "first" : "last") + " node.", function (s) { s.vars.current = s[startKey]; });
+    R.step("c1", "Print the opening `NULL <-> `.", function (s) { s.line = "NULL <-> "; });
+    while (true) {
+      var cur = R.s.vars.current;
+      R.step("while", cur === null ? "`current != nullptr` is false: we reached the end." : "`current != nullptr` is true, so print this node.");
+      if (cur === null) break;
+      var lbl = R.s.nodes[cur].val.label;
+      R.step("print", "Print `" + lbl + "` followed by an arrow.", function (s) { s.line += lbl + " <-> "; });
+      R.step("adv", "`current = current->" + dir + "`: move " + (dir === "next" ? "forward" : "backward") + " one node.", function (s) { s.vars.current = s.nodes[s.vars.current][dir]; });
+    }
+    R.step("c2", "Print the closing `NULL` and start a new line.", function (s) { s.line += "NULL"; pushOut(s, s.line); s.line = ""; });
+    R.exit();
+  };
+}
+OPS.displayForward = displayOp("displayForward", "head", "next", "next");
+OPS.displayBackward = displayOp("displayBackward", "tail", "prev", "prev");
+
+OPS.reverse = function (R) {
+  R.enter("reverse", ["current", "temp"]);
+  R.step("cur", "`current = head`: start at the first node.", function (s) { s.vars.current = s.head; });
+  while (true) {
+    var cur = R.s.vars.current;
+    R.step("while", cur === null ? "`current != nullptr` is false: every node has been flipped." : "`current != nullptr` is true: flip the node `" + lab(R.s, cur) + "`.");
+    if (cur === null) break;
+    R.step("tmp", "`temp = current->prev`: save the prev pointer before we overwrite it.", function (s) { s.vars.temp = s.nodes[cur].prev; });
+    R.step("sw1", "`current->prev = current->next`: prev now aims where next used to aim.", function (s) { s.nodes[cur].prev = s.nodes[cur].next; });
+    R.step("sw2", "`current->next = temp`: next now aims where prev used to aim. The two pointers are swapped.", function (s) { s.nodes[cur].next = s.vars.temp; });
+    R.step("adv", "`current = current->prev`: after the swap, `prev` points to the node that used to be next, so this moves forward.", function (s) { s.vars.current = s.nodes[cur].prev; delete s.vars.temp; });
+  }
+  R.step("t3", "`temp = head`: save the old head.", function (s) { s.vars.temp = s.head; });
+  R.step("h3", "`head = tail`: the old last node is the new first node.", function (s) { s.head = s.tail; });
+  R.step("t4", "`tail = temp`: the old first node is the new last node. The list now reads in the opposite order.", function (s) { s.tail = s.vars.temp; s.row.reverse(); delete s.vars.temp; });
+  R.exit();
+};
+
+var OP_CALL = {
+  insertAtFront: function (a) { return "insertAtFront(" + a.val.label + ")"; },
+  insertAtEnd: function (a) { return "insertAtEnd(" + a.val.label + ")"; },
+  insertAtPosition: function (a) { return "insertAtPosition(" + a.val.label + ", " + a.pos + ")"; },
+  deleteFront: function () { return "deleteFront()"; },
+  deleteEnd: function () { return "deleteEnd()"; },
+  deleteByValue: function (a) { return "deleteByValue(" + a.val.label + ")"; },
+  search: function (a) { return "search(" + a.val.label + ")"; },
+  displayForward: function () { return "displayForward()"; },
+  displayBackward: function () { return "displayBackward()"; },
+  reverse: function () { return "reverse()"; }
+};
+
+function buildTrace(base, op, args) {
+  var R = new Rec(base);
+  OPS[op](R, args);
+  var first = { fn: op, line: CODE[op].ids.sig,
+    text: "Ready to call `" + OP_CALL[op](args) + "`. Press Play, or use Next to run it one line at a time.",
+    stack: [op], snap: clone(cleanSnap(base)) };
+  return [first].concat(R.frames);
+}
+function traceSlots(frames) {
+  var m = 0;
+  frames.forEach(function (f) { m = Math.max(m, f.snap.row.length + (f.snap.floating ? 1 : 0)); });
+  return m;
+}
+
+if (typeof module !== "undefined") {
+  module.exports = { CODE: CODE, OPS: OPS, buildTrace: buildTrace, makeBase: makeBase, cleanSnap: cleanSnap, mkVal: mkVal,
+                     SAMPLES: SAMPLES, traceSlots: traceSlots, MAX_NODES: MAX_NODES };
+}
+
+</script>
+<script>
+var type = "int", base = makeBase(type), frames = null, idx = 0, timer = null, tab = "fn";
+var $ = function (i) { return document.getElementById(i); };
+function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+function fmt(t) { return esc(t).replace(/`([^`]+)`/g, "<code>$1</code>"); }
+var OPL = [["insertAtFront","Insert at front",1],["insertAtEnd","Insert at end",1],["insertAtPosition","Insert at position",2],["deleteFront","Delete front",0],["deleteEnd","Delete end",0],["deleteByValue","Delete by value",1],["search","Search",1],["displayForward","Display forward",0],["displayBackward","Display backward",0],["reverse","Reverse",0]];
+$("op").innerHTML = OPL.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join("");
+var DEF = { int: "25", double: "4.5", string: "Omar" };
+function inputs() {
+  var st = type === "Student", need = OPL.filter(function (o) { return o[0] === $("op").value; })[0][2];
+  $("gV").style.display = !st && need ? "" : "none";
+  $("gN").style.display = st && need ? "" : "none";
+  $("gR").style.display = st && need ? "" : "none";
+  $("gP").style.display = need === 2 ? "" : "none";
+}
+function setType() {
+  type = $("type").value; stop(); frames = null; idx = 0; base = makeBase(type);
+  $("vIn").value = DEF[type] || ""; $("nameIn").value = "Zara"; $("rollIn").value = "103";
+  $("vIn").type = "text"; $("msg").textContent = ""; inputs(); render();
+}
+function msg(t) { $("msg").textContent = t; }
+function getVal() {
+  if (type === "Student") { var r = parseInt($("rollIn").value, 10); if (isNaN(r)) return null; return mkVal("Student", { name: $("nameIn").value.trim() || "Student", roll: r }); }
+  var t = $("vIn").value.trim(); if (t === "") return null;
+  if (type === "int" && !/^-?\d+$/.test(t)) return null;
+  if (type === "double" && isNaN(parseFloat(t))) return null;
+  return mkVal(type, t);
+}
+function commit() { if (frames) { base = cleanSnap(frames[frames.length - 1].snap); idx = frames.length - 1; } }
+function run() {
+  stop(); commit(); msg("");
+  var op = $("op").value, need = OPL.filter(function (o) { return o[0] === op; })[0][2], args = {};
+  if (need) {
+    var v = getVal();
+    if (!v) { msg(type === "int" ? "Enter a whole number." : type === "double" ? "Enter a number." : type === "Student" ? "Enter a roll number." : "Enter a value."); return; }
+    args.val = v;
+  }
+  if (op === "insertAtPosition") { var p = parseInt($("posIn").value, 10); if (isNaN(p)) { msg("Enter a position."); return; } args.pos = p; }
+  if (op.indexOf("insert") === 0 && base.count >= MAX_NODES) { msg("The diagram holds at most " + MAX_NODES + " nodes. Delete one first."); return; }
+  frames = buildTrace(base, op, args); idx = 0; render();
+}
+function stop() { if (timer) { clearInterval(timer); timer = null; } $("play").textContent = "▶ Play"; }
+function delay() { return [0, 1600, 1100, 700, 400, 200][+$("spd").value]; }
+function go(i) { if (!frames) return; idx = Math.max(0, Math.min(frames.length - 1, i)); render(); }
+function play() {
+  if (!frames) return;
+  if (timer) { stop(); return; }
+  if (idx >= frames.length - 1) idx = 0;
+  $("play").textContent = "⏸ Pause"; render();
+  timer = setInterval(function () { if (idx >= frames.length - 1) { stop(); return; } idx++; render(); if (idx >= frames.length - 1) stop(); }, delay());
+}
+function render() {
+  var f = frames ? frames[idx] : { fn: null, line: -1, text: "Choose an operation above and press Run. The list starts with a few nodes so you can try things right away.", stack: [], snap: base };
+  drawList(f.snap); drawCode(f); drawInfo(f);
+}
+function drawList(s) {
+  var W = 96, H = 60, G = 56, X0 = 44, RY = 140, FY = 14;
+  var n = Math.max(s.row.length + (s.floating ? 1 : 0), 3);
+  var width = X0 * 2 + n * (W + G) - G + 30, P = {};
+  s.row.forEach(function (id, i) { P[id] = { x: X0 + i * (W + G), y: RY }; });
+  if (s.floating) P[s.floating] = { x: X0 + s.slot * (W + G), y: FY };
+  var o = '<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--nx)"/></marker><marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--pv)"/></marker></defs>';
+  var ids = Object.keys(s.nodes).filter(function (k) { return P[k]; });
+  if (!ids.length) o += '<text x="' + X0 + '" y="170" style="fill:var(--mu)" font-size="15">The list is empty: head = nullptr, tail = nullptr</text>';
+  var tags = {};
+  function tag(id, t, c) { if (id !== null && id !== undefined && P[id]) (tags[id] = tags[id] || []).push([t, c]); }
+  tag(s.head, "head", "--gd"); tag(s.tail, "tail", "--ac");
+  Object.keys(s.vars).forEach(function (k) { tag(s.vars[k], k, "--wn"); });
+  function arrow(a, b, nx) {
+    var sx = nx ? a.x + W - 9 : a.x + 9, sy = a.y + (nx ? 20 : H - 20), ex, ey, d;
+    if (Math.abs(b.x - a.x) < 1) { ex = b.x + (nx ? W * 0.7 : W * 0.3); ey = b.y < a.y ? b.y + H : b.y; d = "M" + sx + " " + sy + " L" + ex + " " + ey; }
+    else {
+      var fwd = b.x > a.x; ex = fwd ? b.x : b.x + W; ey = b.y + (nx ? 20 : H - 20);
+      if (nx === fwd) { var m = sx + (ex - sx) / 2; d = "M" + sx + " " + sy + " C" + m + " " + sy + " " + m + " " + ey + " " + ex + " " + ey; }
+      else if (nx) d = "M" + sx + " " + sy + " C" + (sx + 45) + " " + (sy - 50) + " " + (ex + 45) + " " + (ey - 50) + " " + ex + " " + ey;
+      else d = "M" + sx + " " + sy + " C" + (sx - 45) + " " + (sy + 50) + " " + (ex - 45) + " " + (ey + 50) + " " + ex + " " + ey;
+    }
+    return '<path class="ar" d="' + d + '" style="stroke:var(' + (nx ? "--nx" : "--pv") + ')" marker-end="url(#' + (nx ? "an" : "ap") + ')"/>';
+  }
+  var nodesSvg = "", arrows = "", dots = "";
+  ids.forEach(function (k) {
+    var nd = s.nodes[k], p = P[k], lbl = nd.val.label;
+    if (lbl.length > 9) lbl = lbl.slice(0, 8) + "…";
+    nodesSvg += '<rect class="nd ' + (s.hl[k] || "") + '" x="' + p.x + '" y="' + p.y + '" width="' + W + '" height="' + H + '" rx="10"/>' +
+      '<line x1="' + (p.x + 18) + '" x2="' + (p.x + 18) + '" y1="' + p.y + '" y2="' + (p.y + H) + '" stroke="var(--bd)"/><line x1="' + (p.x + W - 18) + '" x2="' + (p.x + W - 18) + '" y1="' + p.y + '" y2="' + (p.y + H) + '" stroke="var(--bd)"/>' +
+      '<text x="' + (p.x + 9) + '" y="' + (p.y + H - 29) + '" font-size="9" text-anchor="middle" style="fill:var(--pv)">p</text><text x="' + (p.x + W - 9) + '" y="' + (p.y + 11) + '" font-size="9" text-anchor="middle" style="fill:var(--nx)">n</text>' +
+      '<text x="' + (p.x + W / 2) + '" y="' + (p.y + (nd.val.sub ? 29 : 36)) + '" font-size="' + (lbl.length > 6 ? 13 : 16) + '" font-weight="600" text-anchor="middle" style="fill:var(--tx)">' + esc(lbl) + '</text>' +
+      (nd.val.sub ? '<text x="' + (p.x + W / 2) + '" y="' + (p.y + 47) + '" font-size="11" text-anchor="middle" style="fill:var(--mu)">' + esc(nd.val.sub) + '</text>' : "");
+    [[nd.next, true], [nd.prev, false]].forEach(function (q) {
+      var nx = q[1], dx = nx ? p.x + W - 9 : p.x + 9, dy = p.y + (nx ? 20 : H - 20), c = nx ? "--nx" : "--pv";
+      if (q[0] !== null && P[q[0]]) { arrows += arrow(p, P[q[0]], nx); dots += '<circle cx="' + dx + '" cy="' + dy + '" r="4" style="fill:var(' + c + ')"/>'; }
+      else {
+        var ex = nx ? p.x + W : p.x;
+        arrows += '<line x1="' + ex + '" x2="' + (ex + (nx ? 22 : -22)) + '" y1="' + dy + '" y2="' + dy + '" stroke-width="2" style="stroke:var(' + c + ')"/><text x="' + (ex + (nx ? 25 : -25)) + '" y="' + (dy + 3) + '" font-size="9" text-anchor="' + (nx ? "start" : "end") + '" style="fill:var(--mu)">null</text>';
+        dots += '<circle cx="' + dx + '" cy="' + dy + '" r="4" style="fill:var(--sf);stroke:var(' + c + ');stroke-width:1.5"/>';
+      }
+    });
+    (tags[k] || []).forEach(function (t, i) {
+      var w = t[0].length * 7 + 14, x = p.x + W / 2 - w / 2, y = p.y + H + 8 + i * 22;
+      dots += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="18" rx="9" style="fill:var(--sf);stroke:var(' + t[1] + ');stroke-width:1.5"/><text x="' + (p.x + W / 2) + '" y="' + (y + 13) + '" font-size="11" text-anchor="middle" style="fill:var(--tx)">' + esc(t[0]) + '</text>';
+    });
+  });
+  var svg = $("svg"); svg.setAttribute("viewBox", "0 0 " + width + " 330"); svg.setAttribute("width", width); svg.setAttribute("height", 330);
+  svg.innerHTML = o + nodesSvg + arrows + dots;
+}
+function drawCode(f) {
+  var cls = tab === "cl" || !f.fn, lines;
+  if (cls) lines = CODE.nodeStruct.lines.concat([""], CODE.listClass.lines); else lines = CODE[f.fn].lines;
+  $("tFn").className = cls ? "" : "on"; $("tCl").className = cls ? "on" : "";
+  $("stack").textContent = f.stack.length ? "Call stack: " + f.stack.join(" → ") : "No function is running.";
+  $("code").innerHTML = lines.map(function (l, i) {
+    return '<div class="ln' + (!cls && i === f.line ? " cur" : "") + '"><span class="no">' + (i + 1) + '</span><span>' + esc(l || " ") + '</span></div>';
+  }).join("");
+  var cur = document.querySelector("#code .cur"), box = $("code");
+  if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+}
+function drawInfo(f) {
+  var s = f.snap, n = frames ? frames.length : 0;
+  var lb = function (id) { return id === null || id === undefined ? "nullptr" : s.nodes[id] ? s.nodes[id].val.label : "?"; };
+  $("expl").innerHTML = fmt(f.text);
+  $("cnt").textContent = frames ? "Step " + (idx + 1) + " / " + n : "";
+  $("scrub").max = Math.max(n - 1, 0); $("scrub").value = idx;
+  ["first", "prev", "play", "next", "last", "scrub"].forEach(function (i) { $(i).disabled = !frames; });
+  var h = '<span class="chip">head → ' + esc(lb(s.head)) + '</span><span class="chip">tail → ' + esc(lb(s.tail)) + '</span><span class="chip">count = ' + s.count + '</span>';
+  Object.keys(s.vars).forEach(function (k) { h += '<span class="chip">' + k + ' → ' + esc(lb(s.vars[k])) + '</span>'; });
+  Object.keys(s.nums).forEach(function (k) { h += '<span class="chip">' + k + ' = ' + s.nums[k] + '</span>'; });
+  $("state").innerHTML = h;
+  var L = s.out.slice(-30); if (s.line) L.push(s.line);
+  $("out").textContent = L.length ? L.join("\n") : "(program output appears here)";
+  $("out").scrollTop = 1e6;
+}
+$("type").onchange = setType; $("op").onchange = inputs; $("run").onclick = run; $("reset").onclick = setType;
+$("first").onclick = function () { stop(); go(0); }; $("last").onclick = function () { stop(); go(1e9); };
+$("prev").onclick = function () { stop(); go(idx - 1); }; $("next").onclick = function () { stop(); go(idx + 1); };
+$("play").onclick = play; $("scrub").oninput = function () { stop(); go(+this.value); };
+$("spd").oninput = function () { if (timer) { stop(); play(); } };
+$("tFn").onclick = function () { tab = "fn"; render(); }; $("tCl").onclick = function () { tab = "cl"; render(); };
+document.addEventListener("keydown", function (e) {
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && e.target.type !== "range") return;
+  if (e.key === "ArrowRight") { stop(); go(idx + 1); } else if (e.key === "ArrowLeft") { stop(); go(idx - 1); }
+});
+$("vIn").addEventListener("keydown", function (e) { if (e.key === "Enter") run(); });
+setType();
+</script>
+</body>
+</html>
